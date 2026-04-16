@@ -6,6 +6,7 @@ gcc -Wall -Wno-unused-result -g -Og compilador.c -o compilador
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdbool.h>
 
 #define Total_IDs 1000 // Define o maximo de IDs disponiveis na tabela de simbolos
 
@@ -124,7 +125,7 @@ Token obter_atomo(){
     atomo.lexema[0] = '\0';
     atomo.linha = linhaAtual;
     
-    
+    bool erro = false;
     int i = 0;
     char c = proximoCharValido();
     atomo.linha = linhaAtual;
@@ -137,16 +138,28 @@ Token obter_atomo(){
     }
 
     // Verifica se é numero
-    if(isdigit(c)){
+    if (isdigit(c)) {
         atomo.lexema[i++] = c;
-        while ((c = fgetc(fonte)) != EOF && c != '\n' && !isspace(c)){
+
+        while ((c = fgetc(fonte)) != EOF && !isspace(c) && c != '\n') {
+
+            if (isalpha(c) || c == '_') {
+                erro = true;
+                atomo.lexema[i++] = c;
+                continue;
+            }
+
+            // se for símbolo tipo ) , + - etc -> encerra token
+            if (!isdigit(c)) {
+                ungetc(c, fonte);
+                break;
+            }
+
             atomo.lexema[i++] = c;
         }
-        ungetc(c, fonte); 
-        atomo.lexema[i] = '\0'; 
-        atomo.tipo = NUMERO;
 
-//        printToken(atomo);
+        atomo.lexema[i] = '\0';
+        atomo.tipo = erro ? ERRO : NUMERO;
 
         return atomo;
     }
@@ -296,7 +309,7 @@ int main(int argv, char *argc[]){
 
     
     Token token = obter_atomo();
-    printf("%s, %d, %d", token.lexema, token.linha, token.tipo);
+    printf("%s, %d, %d\n", token.lexema, token.linha, token.tipo);
 
     return 0;
 }
