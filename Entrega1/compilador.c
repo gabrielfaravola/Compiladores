@@ -17,11 +17,10 @@ typedef enum{
     STRING,
     NUMERO,
     DELIMITADOR,
-    OPERADOR_BOOLEAN,
+    BOOLEANO,
     OPERADOR_ARITMETICO,
     OPERADOR_RELACIONAL,
     OPERADOR_LOGICO,
-    DOIS_PONTOS,
     EOS
 }TAtomo;
 
@@ -29,15 +28,16 @@ typedef struct{     // Estrutura do token
     char lexema[100];
     int linha;
     TAtomo tipo;
-}Token;
+}TInfoAtomo;
 
-FILE *fonte;
+FILE *buffer;
 int linhaAtual = 1;
+char tabela_simbolos[Total_IDs][100];
 
 // Função para abrir arquivo
 void leituraArquivo(char *arquivo){
-    fonte = fopen(arquivo, "r");
-    if(fonte == NULL){
+    buffer = fopen(arquivo, "r");
+    if(buffer == NULL){
         perror("Erro ao abrir o arquivo");
     }
 }
@@ -46,7 +46,7 @@ void leituraArquivo(char *arquivo){
 char proximoCharValido() {
     char c;
 
-    while ((c = fgetc(fonte)) != EOF) {
+    while ((c = fgetc(buffer)) != EOF) {
         if (c == '\n') {
             linhaAtual++;
             continue;
@@ -57,7 +57,7 @@ char proximoCharValido() {
         }
 
         if (c == '#') {
-            while ((c = fgetc(fonte)) != '\n' && c != EOF);
+            while ((c = fgetc(buffer)) != '\n' && c != EOF);
             if (c == '\n') linhaAtual++;
             continue;
         }
@@ -74,8 +74,8 @@ void erroLexico(char *lexema) {
     fprintf(stderr, "Token invalido: \"%s\"\n", lexema);
     fprintf(stderr, "Encerrando analise...\n");
 
-    if (fonte != NULL) {
-        fclose(fonte);
+    if (buffer != NULL) {
+        fclose(buffer);
     }
 
     exit(EXIT_FAILURE);
@@ -93,13 +93,13 @@ TAtomo classificarLexema(char *lexema) {
         "and", "or", "not", "in", "is"
     };
 
-    int numkeywords  = sizeof(keywords ) / sizeof(keywords [0]);
-    int numLogicos = sizeof(logicos) / sizeof(logicos[0]);
-
     // Booleanos
     if (strcmp(lexema, "True") == 0 || strcmp(lexema, "False") == 0) {
-        return OPERADOR_BOOLEAN;
+        return BOOLEANO;
     }
+
+    int numkeywords  = sizeof(keywords ) / sizeof(keywords [0]);
+    int numLogicos = sizeof(logicos) / sizeof(logicos[0]);
 
     // Operadores lógicos
     for (int i = 0; i < numLogicos; i++) {
@@ -119,8 +119,8 @@ TAtomo classificarLexema(char *lexema) {
     return IDENTIFICADOR;
 }
 
-Token obter_atomo(){
-    Token atomo;
+TInfoAtomo obter_atomo(){
+    TInfoAtomo atomo;
     atomo.tipo = ERRO;
     atomo.lexema[0] = '\0';
     atomo.linha = linhaAtual;
@@ -141,7 +141,7 @@ Token obter_atomo(){
     if (isdigit(c)) {
         atomo.lexema[i++] = c;
 
-        while ((c = fgetc(fonte)) != EOF && !isspace(c) && c != '\n') {
+        while ((c = fgetc(buffer)) != EOF && !isspace(c) && c != '\n') {
 
             if (isalpha(c) || c == '_') {
                 erro = true;
@@ -151,7 +151,7 @@ Token obter_atomo(){
 
             // se for símbolo tipo ) , + - etc -> encerra token
             if (!isdigit(c)) {
-                ungetc(c, fonte);
+                ungetc(c, buffer);
                 break;
             }
 
@@ -167,10 +167,10 @@ Token obter_atomo(){
     // Verifica se é palavra reservada ou ID
     if (isalpha(c) || c == '_') {
         atomo.lexema[i++] = c;
-        while ((c = fgetc(fonte)) != EOF && (isalnum(c) || c == '_')){
+        while ((c = fgetc(buffer)) != EOF && (isalnum(c) || c == '_')){
             atomo.lexema[i++] = c;
         }
-        ungetc(c, fonte); 
+        ungetc(c, buffer); 
         atomo.lexema[i] = '\0'; 
         
         atomo.tipo = classificarLexema(atomo.lexema);
@@ -185,7 +185,7 @@ Token obter_atomo(){
         char delimitador_string = c; 
         atomo.lexema[i++] = c;
         
-        while ((c = fgetc(fonte)) != delimitador_string && c != EOF && c != '\n') {
+        while ((c = fgetc(buffer)) != delimitador_string && c != EOF && c != '\n') {
             atomo.lexema[i++] = c;
         }
         
@@ -208,7 +208,7 @@ Token obter_atomo(){
     // Verifica se é operador relacional ou de simples "=" para atribuição
     if (c == '=' || c == '<' || c == '>' || c == '!') {
         atomo.lexema[i++] = c;
-        char prox = fgetc(fonte); 
+        char prox = fgetc(buffer); 
         
         if (prox == '=') {
             atomo.lexema[i++] = prox;
@@ -220,7 +220,7 @@ Token obter_atomo(){
             return atomo;
         }
         
-        ungetc(prox, fonte);
+        ungetc(prox, buffer);
         atomo.lexema[i] = '\0';
         
         if (c == '!') {
@@ -243,11 +243,11 @@ Token obter_atomo(){
         atomo.lexema[i++] = c;
         
         if (c == '*') {
-            char prox = fgetc(fonte);
+            char prox = fgetc(buffer);
             if (prox == '*') {
                 atomo.lexema[i++] = prox; 
             } else {
-                ungetc(prox, fonte); 
+                ungetc(prox, buffer); 
             }
         }
         
@@ -260,21 +260,10 @@ Token obter_atomo(){
     }
 
     // Verifica se é delimitador
-    if (c == '(' || c == ')' || c == '[' || c == ']' || c == '{' || c == '}' || c == ',') {
+    if (c == '(' || c == ')' || c == '[' || c == ']' || c == '{' || c == '}' || c == ',' || c == ':') {
         atomo.lexema[i++] = c;
         atomo.lexema[i] = '\0';
         atomo.tipo = DELIMITADOR;
-
-//        printToken(atomo);
-
-        return atomo;
-    }
-    
-    // Verifica ":"
-    if (c == ':') {
-        atomo.lexema[i++] = c;
-        atomo.lexema[i] = '\0';
-        atomo.tipo = DOIS_PONTOS;
 
 //        printToken(atomo);
 
@@ -308,7 +297,7 @@ int main(int argv, char *argc[]){
     leituraArquivo(argc[1]);
 
     
-    Token token = obter_atomo();
+    TInfoAtomo token = obter_atomo();
     printf("%s, %d, %d\n", token.lexema, token.linha, token.tipo);
 
     return 0;
