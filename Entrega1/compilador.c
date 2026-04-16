@@ -166,9 +166,9 @@ Token obter_atomo(){
 
     // Verifica se é palavra reservada ou ID
     if (isalpha(c) || c == '_') {
-        if (i < 99) atomo.lexema[i++] = c;
+        atomo.lexema[i++] = c;
         while ((c = fgetc(fonte)) != EOF && (isalnum(c) || c == '_')){
-            if (i < 99) atomo.lexema[i++] = c;
+            atomo.lexema[i++] = c;
         }
         ungetc(c, fonte); 
         atomo.lexema[i] = '\0'; 
@@ -183,14 +183,14 @@ Token obter_atomo(){
     // Verifica se é string
     if (c == '"' || c == '\'') {
         char delimitador_string = c; 
-        if (i < 99) atomo.lexema[i++] = c;
+        atomo.lexema[i++] = c;
         
         while ((c = fgetc(fonte)) != delimitador_string && c != EOF && c != '\n') {
-            if (i < 99) atomo.lexema[i++] = c;
+            atomo.lexema[i++] = c;
         }
         
         if (c == delimitador_string) {
-            if (i < 99) atomo.lexema[i++] = c; 
+            atomo.lexema[i++] = c; 
             atomo.lexema[i] = '\0';
             atomo.tipo = STRING;
         } else {
@@ -207,11 +207,11 @@ Token obter_atomo(){
 
     // Verifica se é operador relacional ou de simples "=" para atribuição
     if (c == '=' || c == '<' || c == '>' || c == '!') {
-        if (i < 99) atomo.lexema[i++] = c;
+        atomo.lexema[i++] = c;
         char prox = fgetc(fonte); 
         
         if (prox == '=') {
-            if (i < 99) atomo.lexema[i++] = prox;
+            atomo.lexema[i++] = prox;
             atomo.lexema[i] = '\0';
             atomo.tipo = OPERADOR_RELACIONAL;
 
@@ -240,12 +240,12 @@ Token obter_atomo(){
 
     // Verifica se é operador aritmético
     if (c == '+' || c == '-' || c == '*' || c == '/' || c == '%') {
-        if (i < 99) atomo.lexema[i++] = c;
+        atomo.lexema[i++] = c;
         
         if (c == '*') {
             char prox = fgetc(fonte);
             if (prox == '*') {
-                if (i < 99) atomo.lexema[i++] = prox; 
+                atomo.lexema[i++] = prox; 
             } else {
                 ungetc(prox, fonte); 
             }
@@ -261,7 +261,7 @@ Token obter_atomo(){
 
     // Verifica se é delimitador
     if (c == '(' || c == ')' || c == '[' || c == ']' || c == '{' || c == '}' || c == ',') {
-        if (i < 99) atomo.lexema[i++] = c;
+        atomo.lexema[i++] = c;
         atomo.lexema[i] = '\0';
         atomo.tipo = DELIMITADOR;
 
@@ -272,7 +272,7 @@ Token obter_atomo(){
     
     // Verifica ":"
     if (c == ':') {
-        if (i < 99) atomo.lexema[i++] = c;
+        atomo.lexema[i++] = c;
         atomo.lexema[i] = '\0';
         atomo.tipo = DOIS_PONTOS;
 
