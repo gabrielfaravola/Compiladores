@@ -10,6 +10,7 @@ gcc -Wall -Wno-unused-result -g -Og compilador.c -o compilador
 
 #define Total_IDs 1000 // Define o maximo de IDs disponiveis na tabela de simbolos
 
+
 typedef enum{
     ERRO,
     IDENTIFICADOR,
@@ -24,7 +25,23 @@ typedef enum{
     EOS
 }TAtomo;
 
-typedef struct{     // Estrutura do token
+char* tipoAtomo(TAtomo tipo) {
+    switch(tipo) {
+        case IDENTIFICADOR: return "IDENTIFICADOR";
+        case PALAVRA_RESERVADA: return "PALAVRA_RESERVADA";
+        case STRING: return "STRING";
+        case NUMERO: return "NUMERO";
+        case DELIMITADOR: return "DELIMITADOR";
+        case BOOLEANO: return "BOOLEANO";
+        case OPERADOR_ARITMETICO: return "OPERADOR_ARITMETICO";
+        case OPERADOR_RELACIONAL: return "OPERADOR_RELACIONAL";
+        case OPERADOR_LOGICO: return "OPERADOR_LOGICO";
+        default: return "DESCONHECIDO";
+    }
+}
+
+// Estrutura do token
+typedef struct{
     char lexema[100];
     int linha;
     TAtomo tipo;
@@ -33,12 +50,55 @@ typedef struct{     // Estrutura do token
 FILE *buffer;
 int linhaAtual = 1;
 char tabela_simbolos[Total_IDs][100];
+int count_IDs = 1;
 
-// Função para abrir arquivo
-void leituraArquivo(char *arquivo){
+
+// Função para abrir arquivos
+void abrirArquivos(char *arquivo){
     buffer = fopen(arquivo, "r");
     if(buffer == NULL){
         perror("Erro ao abrir o arquivo");
+    }
+}
+
+void erroLexico(char *lexema) {
+    fprintf(stderr, "\n[ERRO LEXICO]\n");
+    fprintf(stderr, "Linha: %d\n", linhaAtual);
+    fprintf(stderr, "Token invalido: \"%s\"\n", lexema);
+    fprintf(stderr, "Encerrando analise.\n");
+
+    if (buffer != NULL) {
+        fclose(buffer);
+    }
+
+    exit(EXIT_FAILURE);
+}
+
+int buscarOuInserir(char *lexema) {
+    if (count_IDs >= Total_IDs) {
+        printf("Erro: tabela de simbolos cheia\n");
+        exit(1);
+    }
+
+    for (int i = 0; i < count_IDs; i++) {
+        if (strcmp(tabela_simbolos[i], lexema) == 0) {
+            return i;
+        }
+    }
+
+    strcpy(tabela_simbolos[count_IDs], lexema);
+    return count_IDs++;
+}
+
+void printAtomo(TInfoAtomo atomo){
+    char* TIPO = tipoAtomo(atomo.tipo);
+
+    if(atomo.tipo == IDENTIFICADOR) {
+        int linhaTS = buscarOuInserir(atomo.lexema);
+        printf("%d# %s | %d\n", atomo.linha, TIPO, linhaTS);
+    
+    } else {
+        printf("%d# %s | %s\n", atomo.linha, TIPO, atomo.lexema);
     }
 }
 
@@ -68,18 +128,6 @@ char proximoCharValido() {
     return EOF;
 }
 
-void erroLexico(char *lexema) {
-    fprintf(stderr, "\n[ERRO LEXICO]\n");
-    fprintf(stderr, "Linha: %d\n", linhaAtual);
-    fprintf(stderr, "Token invalido: \"%s\"\n", lexema);
-    fprintf(stderr, "Encerrando analise...\n");
-
-    if (buffer != NULL) {
-        fclose(buffer);
-    }
-
-    exit(EXIT_FAILURE);
-}
 
 // Verifica se é BOOLEAN, LÓGICO, PALAVRA RESERVADA ou ID
 TAtomo classificarLexema(char *lexema) {
@@ -98,7 +146,7 @@ TAtomo classificarLexema(char *lexema) {
         return BOOLEANO;
     }
 
-    int numkeywords  = sizeof(keywords ) / sizeof(keywords [0]);
+    int numkeywords  = sizeof(keywords) / sizeof(keywords [0]);
     int numLogicos = sizeof(logicos) / sizeof(logicos[0]);
 
     // Operadores lógicos
@@ -116,6 +164,7 @@ TAtomo classificarLexema(char *lexema) {
     }
 
     // Identificador padrão
+    buscarOuInserir(lexema);
     return IDENTIFICADOR;
 }
 
@@ -140,43 +189,45 @@ TInfoAtomo obter_atomo(){
     // Verifica se é numero
     if (isdigit(c)) {
         atomo.lexema[i++] = c;
-
-        while ((c = fgetc(buffer)) != EOF && !isspace(c) && c != '\n') {
-
-            if (isalpha(c) || c == '_') {
-                erro = true;
-                atomo.lexema[i++] = c;
-                continue;
-            }
-
-            // se for símbolo tipo ) , + - etc -> encerra token
+        while ((c = fgetc(buffer)) != EOF && !isspace(c)) {
             if (!isdigit(c)) {
-                ungetc(c, buffer);
-                break;
+                erro = true;
+                atomo.tipo = ERRO;
             }
-
             atomo.lexema[i++] = c;
         }
 
         atomo.lexema[i] = '\0';
-        atomo.tipo = erro ? ERRO : NUMERO;
-
+        if (erro) {
+            erroLexico(atomo.lexema);
+        } else {
+            atomo.tipo = NUMERO;
+        }
+        printAtomo(atomo);
         return atomo;
     }
 
     // Verifica se é palavra reservada ou ID
     if (isalpha(c) || c == '_') {
         atomo.lexema[i++] = c;
-        while ((c = fgetc(buffer)) != EOF && (isalnum(c) || c == '_')){
+
+        while ((c = fgetc(buffer)) != EOF && (!isspace(c))){
+            if(c != '_' && !isalpha(c) && !isdigit(c)){
+                erro = true;
+                atomo.tipo = ERRO;
+            }
             atomo.lexema[i++] = c;
         }
-        ungetc(c, buffer); 
-        atomo.lexema[i] = '\0'; 
-        
-        atomo.tipo = classificarLexema(atomo.lexema);
 
-//        printToken(atomo);
+        atomo.lexema[i] = '\0';
 
+        if(erro){
+            erroLexico(atomo.lexema);
+        }else{
+            atomo.tipo = classificarLexema(atomo.lexema);
+        }
+
+        printAtomo(atomo);
         return atomo;
     }
 
@@ -199,9 +250,11 @@ TInfoAtomo obter_atomo(){
         }
 
         if (atomo.tipo != EOS && atomo.tipo != ERRO) {
-    //        printToken(atomo);
-
+            printAtomo(atomo);
+        } else{
+            erroLexico(atomo.lexema);
         }
+
         return atomo;
     }
 
@@ -215,8 +268,7 @@ TInfoAtomo obter_atomo(){
             atomo.lexema[i] = '\0';
             atomo.tipo = OPERADOR_RELACIONAL;
 
-    //        printToken(atomo);
-
+            printAtomo(atomo);
             return atomo;
         }
         
@@ -232,9 +284,11 @@ TInfoAtomo obter_atomo(){
         }
         
         if (atomo.tipo != EOS && atomo.tipo != ERRO) {
-    //        printToken(atomo);
-
+            printAtomo(atomo);
+        } else{
+            erroLexico(atomo.lexema);
         }
+
         return atomo;
     }
 
@@ -254,8 +308,7 @@ TInfoAtomo obter_atomo(){
         atomo.lexema[i] = '\0';
         atomo.tipo = OPERADOR_ARITMETICO;
 
-//        printToken(atomo);
-
+        printAtomo(atomo);
         return atomo;
     }
 
@@ -265,28 +318,18 @@ TInfoAtomo obter_atomo(){
         atomo.lexema[i] = '\0';
         atomo.tipo = DELIMITADOR;
 
-//        printToken(atomo);
-
+        printAtomo(atomo);
         return atomo;
     }
 
     // Se nao for nada = ERRO
     atomo.lexema[0] = c;
     atomo.lexema[1] = '\0';
-    atomo.tipo = ERRO;
     
     erroLexico(atomo.lexema);
+    printAtomo(atomo);
     return atomo;
 }
-
-
-
-
-
-
-
-
-
 
 int main(int argv, char *argc[]){
     if(argv != 2){  // Se o executavel não receber parametro, já finaliza
@@ -294,11 +337,25 @@ int main(int argv, char *argc[]){
         return 1;
     }
 
-    leituraArquivo(argc[1]);
+    abrirArquivos(argc[1]);
 
-    
-    TInfoAtomo token = obter_atomo();
-    printf("%s, %d, %d\n", token.lexema, token.linha, token.tipo);
+    obter_atomo();
+    obter_atomo();
+    obter_atomo();
+    obter_atomo();
+    obter_atomo();
+    obter_atomo();
+    obter_atomo();
+    obter_atomo();
+    obter_atomo();
+    obter_atomo();
+    obter_atomo();
+    obter_atomo();
+    obter_atomo();
+    obter_atomo();
+    obter_atomo();
+    obter_atomo();
+
 
     return 0;
 }
