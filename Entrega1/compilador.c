@@ -8,7 +8,7 @@ gcc -Wall -Wno-unused-result -g -Og compilador.c -o compilador
 #include <ctype.h>
 #include <stdbool.h>
 
-#define Total_IDs 1000 // Define o maximo de IDs disponiveis na tabela de simbolos
+#define Total_IDs 50 // Define o maximo de IDs disponiveis na tabela de simbolos
 
 
 typedef enum{
@@ -52,7 +52,7 @@ typedef struct{
 FILE *buffer;
 int linhaAtual = 1;
 char tabela_simbolos[Total_IDs][100];
-int count_IDs = 1;
+int IDs_definidos = 1;
 
 
 // Função para abrir arquivos
@@ -79,19 +79,20 @@ void erroLexico(char *lexema) {
 
 // Percorre a tabela de simbolos para encontrar se um ID ja foi definido, caso não, insere
 int buscarOuInserir(char *lexema) {
-    if (count_IDs >= Total_IDs) {
+    if (IDs_definidos >= Total_IDs) {
         printf("Erro: tabela de simbolos cheia\n");
         exit(1);
     }
 
-    for (int i = 0; i < count_IDs; i++) {
+    for (int i = 0; i < IDs_definidos; i++) {
         if (strcmp(tabela_simbolos[i], lexema) == 0) {
             return i;
         }
     }
 
-    strcpy(tabela_simbolos[count_IDs], lexema);
-    return count_IDs++;
+    strcpy(tabela_simbolos[IDs_definidos], lexema);
+    IDs_definidos++;
+    return IDs_definidos;
 }
 
 // Printa atomo incluindo seu TIPO escrito
@@ -134,7 +135,7 @@ char proximoCharValido() {
 }
 
 
-// Verifica se é BOOLEAN, LÓGICO, PALAVRA RESERVADA ou ID
+// Verifica se é BOOLEANO, LÓGICO, PALAVRA RESERVADA ou ID
 TAtomo classificarLexema(char *lexema) {
     const char *p_reservada [] = {
         "return", "from", "while", "as", "elif", "with", "else", "if", 
