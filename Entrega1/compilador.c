@@ -47,6 +47,8 @@ typedef struct{
     TAtomo tipo;
 }TInfoAtomo;
 
+
+// Variaveis globais
 FILE *buffer;
 int linhaAtual = 1;
 char tabela_simbolos[Total_IDs][100];
@@ -61,6 +63,7 @@ void abrirArquivos(char *arquivo){
     }
 }
 
+// Printa erro lexico e encerra programa
 void erroLexico(char *lexema) {
     fprintf(stderr, "\n[ERRO LEXICO]\n");
     fprintf(stderr, "Linha: %d\n", linhaAtual);
@@ -74,6 +77,7 @@ void erroLexico(char *lexema) {
     exit(EXIT_FAILURE);
 }
 
+// Percorre a tabela de simbolos para encontrar se um ID ja foi definido, caso não, insere
 int buscarOuInserir(char *lexema) {
     if (count_IDs >= Total_IDs) {
         printf("Erro: tabela de simbolos cheia\n");
@@ -90,6 +94,7 @@ int buscarOuInserir(char *lexema) {
     return count_IDs++;
 }
 
+// Printa atomo incluindo seu TIPO escrito
 void printAtomo(TInfoAtomo atomo){
     char* TIPO = tipoAtomo(atomo.tipo);
 
@@ -102,7 +107,7 @@ void printAtomo(TInfoAtomo atomo){
     }
 }
 
-// Retorna o proximo caracter válido, ignorando espaços, cometários, e \n(s)
+// Ignora espaços, cometários, e \n(s)
 char proximoCharValido() {
     char c;
 
@@ -131,7 +136,7 @@ char proximoCharValido() {
 
 // Verifica se é BOOLEAN, LÓGICO, PALAVRA RESERVADA ou ID
 TAtomo classificarLexema(char *lexema) {
-    const char *keywords [] = {
+    const char *p_reservada [] = {
         "return", "from", "while", "as", "elif", "with", "else", "if", 
         "break", "len", "input", "print", "exec", "raise", "continue", 
         "range", "def", "for"
@@ -146,7 +151,7 @@ TAtomo classificarLexema(char *lexema) {
         return BOOLEANO;
     }
 
-    int numkeywords  = sizeof(keywords) / sizeof(keywords [0]);
+    int numP_reservada  = sizeof(p_reservada) / sizeof(p_reservada [0]);
     int numLogicos = sizeof(logicos) / sizeof(logicos[0]);
 
     // Operadores lógicos
@@ -156,9 +161,9 @@ TAtomo classificarLexema(char *lexema) {
         }
     }
 
-    // Palavras keywords 
-    for (int i = 0; i < numkeywords ; i++) {
-        if (strcmp(lexema, keywords [i]) == 0) {
+    // Palavras reservadas 
+    for (int i = 0; i < numP_reservada ; i++) {
+        if (strcmp(lexema, p_reservada [i]) == 0) {
             return PALAVRA_RESERVADA;
         }
     }
