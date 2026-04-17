@@ -55,7 +55,7 @@ char tabela_simbolos[Total_IDs][100];
 int IDs_definidos = 1;
 
 
-// Função para abrir arquivos
+// Função para abrir arquivos fonte
 void abrirArquivos(char *arquivo){
     buffer = fopen(arquivo, "r");
     if(buffer == NULL){
@@ -134,7 +134,6 @@ char proximoCharValido() {
     return EOF;
 }
 
-
 // Verifica se é BOOLEANO, LÓGICO, PALAVRA RESERVADA ou ID
 TAtomo classificarLexema(char *lexema) {
     const char *p_reservada [] = {
@@ -174,6 +173,7 @@ TAtomo classificarLexema(char *lexema) {
     return IDENTIFICADOR;
 }
 
+// Retorna um Token a partir do seguinte agrupamentos do buffer
 TInfoAtomo obter_atomo(){
     TInfoAtomo atomo;
     atomo.tipo = ERRO;
