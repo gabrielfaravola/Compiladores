@@ -337,6 +337,27 @@ TInfoAtomo obter_atomo(){
     return atomo;
 }
 
+// || ANALISADOR SINTÁTICO ||
+
+//Váriavel global lookhead para passar por todos os atómos e verificar 
+TInfoAtomo lookahead;
+
+//Função consome que vai comparar cada átomo e avançar
+void consome(TAtomo tipo_esperado) {
+    if (lookahead.tipo == tipo_esperado) {
+        lookahead = obter_atomo();
+    } else {
+        printf("\n[ERRO SINTÁTICO] Linha %d: Esperava token do tipo %s, mas encontrou %s ('%s')\n", 
+               lookahead.linha, 
+               tipoAtomo(tipo_esperado), 
+               tipoAtomo(lookahead.tipo), 
+               lookahead.lexema);
+        
+        if (buffer != NULL) fclose(buffer);
+        exit(EXIT_FAILURE); // Encerra o processo conforme exigido
+    }
+}
+
 int main(int argv, char *argc[]){
     if(argv != 2){  // Se o executavel não receber parametro, já finaliza
         printf("Exemplo de execução: %s <arquivo.py>\n", argc[0]);
@@ -365,3 +386,4 @@ int main(int argv, char *argc[]){
 
     return 0;
 }
+
