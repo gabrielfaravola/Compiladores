@@ -34,31 +34,35 @@ Abaixo está a proposta da GLC, onde as palavras em maiúsculo (ou entre aspas) 
 ### Regras de Produção
 
 **Programa e Comandos**
-* `Programa -> Comando Programa | ε`
-* `Comando -> Atribuicao | Condicional | Repeticao | ComandoPrint | ComandoInput`
+* `ProgramaMiniPython -> Instrucao ProgramaMiniPython | ε`
+* `Instrucao -> AtribuicaoVar | ComandoIf | ComandoRepeticao | ComandoPrint | ComandoInput | ChamadaFuncao | ControleFluxo`
 
 **Estruturas de Controle**
-* `Condicional -> "if" Expressao ":" Comando ( "elif" Expressao ":" Comando )* ( "else" ":" Comando )?`
-* `Repeticao -> "while" Expressao ":" Comando | "for" IDENTIFICADOR "in" "range" "(" Expressao ")" ":" Comando`
+* `ComandoIf -> "if" Expressao ":" Instrucao ( "elif" Expressao ":" Instrucao )* ( "else" ":" Instrucao )?`
+* `ComandoRepeticao -> "while" Expressao ":" Instrucao | "for" IDENTIFICADOR "in" "range" "(" Expressao ")" ":" Instrucao`
+* `ControleFluxo -> "break" | "continue" | "return" ( Expressao )?`
 
 **Atribuição e Interação**
-* `Atribuicao -> IDENTIFICADOR ( "[" Expressao "]" )? "=" Expressao | IDENTIFICADOR "(" (ListaExpressoes)? ")"`
-* `ComandoPrint -> "print" ListaExpressoes`
+* `AtribuicaoVar -> IDENTIFICADOR ( "[" Expressao "]" )? "=" Expressao`
+* `ChamadaFuncao -> IDENTIFICADOR "(" (ListaArgumentos)? ")"`
+* `ComandoPrint -> "print" ListaPrint`
 * `ComandoInput -> IDENTIFICADOR "=" "input" "(" STRING_LITERAL ")"`
 
-**Expressões**
-* `ListaExpressoes -> Expressao ( "," Expressao )*`
-* `Expressao -> ExpRelacional ( ("and" | "or") ExpRelacional )*`
-* `ExpRelacional -> ExpSimples ( OperadorRelacional ExpSimples )?`
-* `ExpSimples -> ( "+" | "-" )? Termo ( OperadorAritmetico Termo )*`
-* `Termo -> ( "not" )? Fator`
-* `Fator -> IDENTIFICADOR ( "[" Expressao "]" )? | NUMERO_INTEIRO | BOOLEANO | Lista | STRING_LITERAL | "(" Expressao ")" | "len" "(" Expressao ")"`
+**Expressões e Lógica**
+* `ListaPrint -> ItemPrint ( "," ItemPrint )*`
+* `ItemPrint -> STRING_LITERAL | Expressao`
+* `ListaArgumentos -> Expressao ( "," Expressao )*`
+* `Expressao -> TesteRelacional ( ("and" | "or") TesteRelacional )*`
+* `TesteRelacional -> ExpMatematica ( OperadorRelacional ExpMatematica )?`
+* `ExpMatematica -> TermoMultiplicativo ( ("+" | "-") TermoMultiplicativo )*`
+* `TermoMultiplicativo -> ( "not" )? ElementoBase ( ("*" | "**" | "%") ElementoBase )*`
+* `ElementoBase -> IDENTIFICADOR ( "[" Expressao "]" )? | NUMERO_INTEIRO | BOOLEANO | CriacaoLista | "(" Expressao ")" | "len" "(" Expressao ")"`
 
-**Listas (Estrutura de Dados suportada)**
-* `Lista -> "[" ElementosLista "]"`
-* `ElementosLista -> Expressao ( "," Expressao )* | ε`
+**Listas e Tuplas**
+* `CriacaoLista -> "[" ElementosColecao "]"`
+* `ElementosColecao -> ListaArgumentos | ε`
 
 **Operadores**
 * `OperadorRelacional -> "==" | "!=" | "<" | ">" | "<=" | ">=" | "is" | "in"`
-* `OperadorAritmetico -> "+" | "*" | "**" | "%"`
+* `OperadorAritmetico -> "+" | "-" | "*" | "**" | "%"`
 * `OperadorLogico -> "and" | "or" | "not"`
