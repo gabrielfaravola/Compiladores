@@ -50,6 +50,7 @@ typedef struct{
 
 // Variaveis globais
 FILE *buffer;
+FILE *saida;
 int linhaAtual = 1;
 char tabela_simbolos[Total_IDs][100];
 int IDs_definidos = 1;
@@ -59,15 +60,20 @@ int IDs_definidos = 1;
 void abrirArquivos(char *arquivo){
     buffer = fopen(arquivo, "r");
     if(buffer == NULL){
-        perror("Erro ao abrir o arquivo");
+        perror("Erro ao abrir o fonte");
+    }
+
+    saida = fopen("saida.txt", "w");
+    if(saida == NULL){
+        perror("Erro ao criar/abrir saida.txt");
     }
 }
 
 // Printa erro lexico e encerra programa
-void erroLexico(char *lexema) {
+void erroLexico(TInfoAtomo atomo) {
     fprintf(stderr, "\n[ERRO LEXICO]\n");
-    fprintf(stderr, "Linha: %d\n", linhaAtual);
-    fprintf(stderr, "Token invalido: \"%s\"\n", lexema);
+    fprintf(stderr, "Linha: %d\n", atomo.linha);
+    fprintf(stderr, "Token invalido: \"%s\"\n", atomo.lexema);
     fprintf(stderr, "Encerrando analise.\n");
 
     if (buffer != NULL) {
@@ -91,8 +97,7 @@ int buscarOuInserir(char *lexema) {
     }
 
     strcpy(tabela_simbolos[IDs_definidos], lexema);
-    IDs_definidos++;
-    return IDs_definidos;
+    return IDs_definidos++;
 }
 
 // Printa atomo incluindo seu TIPO escrito
@@ -102,9 +107,10 @@ void printAtomo(TInfoAtomo atomo){
     if(atomo.tipo == IDENTIFICADOR) {
         int linhaTS = buscarOuInserir(atomo.lexema);
         printf("%d# %s | %d\n", atomo.linha, TIPO, linhaTS);
-    
+        fprintf(saida, "%d# %s | %d\n", atomo.linha, TIPO, linhaTS);
     } else {
         printf("%d# %s | %s\n", atomo.linha, TIPO, atomo.lexema);
+        fprintf(saida, "%d# %s | %s\n", atomo.linha, TIPO, atomo.lexema);
     }
 }
 
@@ -198,17 +204,17 @@ TInfoAtomo obter_atomo(){
         while ((c = fgetc(buffer)) != EOF && !isspace(c)) {
             if (!isdigit(c)) {
                 erro = true;
-                atomo.tipo = ERRO;
             }
             atomo.lexema[i++] = c;
         }
 
         atomo.lexema[i] = '\0';
         if (erro) {
-            erroLexico(atomo.lexema);
-        } else {
-            atomo.tipo = NUMERO;
+            atomo.tipo = ERRO;
+            erroLexico(atomo);
         }
+
+        atomo.tipo = NUMERO;
         printAtomo(atomo);
         return atomo;
     }
@@ -218,35 +224,33 @@ TInfoAtomo obter_atomo(){
         atomo.lexema[i++] = c;
 
         while ((c = fgetc(buffer)) != EOF && (!isspace(c))){
-            if(c != '_' && !isalpha(c) && !isdigit(c)){
+            if(c != '_' && !isalpha(c) && !isdigit(c)){ 
                 erro = true;
-                atomo.tipo = ERRO;
             }
             atomo.lexema[i++] = c;
         }
-
+        
         atomo.lexema[i] = '\0';
-
+        
         if(erro){
-            erroLexico(atomo.lexema);
-        }else{
-            atomo.tipo = classificarLexema(atomo.lexema);
+            atomo.tipo = ERRO;
+            erroLexico(atomo);
         }
 
+        atomo.tipo = classificarLexema(atomo.lexema);
         printAtomo(atomo);
         return atomo;
     }
 
     // Verifica se é string
-    if (c == '"' || c == '\'') {
-        char delimitador_string = c; 
+    if (c == '"') {
         atomo.lexema[i++] = c;
         
-        while ((c = fgetc(buffer)) != delimitador_string && c != EOF && c != '\n') {
+        while ((c = fgetc(buffer)) != '"' && c != EOF && c != '\n') {
             atomo.lexema[i++] = c;
         }
         
-        if (c == delimitador_string) {
+        if (c == '"') {
             atomo.lexema[i++] = c; 
             atomo.lexema[i] = '\0';
             atomo.tipo = STRING;
@@ -255,12 +259,11 @@ TInfoAtomo obter_atomo(){
             atomo.tipo = ERRO;
         }
 
-        if (atomo.tipo != EOS && atomo.tipo != ERRO) {
-            printAtomo(atomo);
-        } else{
-            erroLexico(atomo.lexema);
-        }
+        if (atomo.tipo == EOS || atomo.tipo == ERRO) {
+            erroLexico(atomo);
+        } 
 
+        printAtomo(atomo);
         return atomo;
     }
 
@@ -289,12 +292,11 @@ TInfoAtomo obter_atomo(){
             atomo.tipo = OPERADOR_RELACIONAL; 
         }
         
-        if (atomo.tipo != EOS && atomo.tipo != ERRO) {
-            printAtomo(atomo);
-        } else{
-            erroLexico(atomo.lexema);
-        }
+        if (atomo.tipo == EOS || atomo.tipo == ERRO) {
+            erroLexico(atomo);
+        } 
 
+        printAtomo(atomo);
         return atomo;
     }
 
@@ -332,8 +334,7 @@ TInfoAtomo obter_atomo(){
     atomo.lexema[0] = c;
     atomo.lexema[1] = '\0';
     
-    erroLexico(atomo.lexema);
-    printAtomo(atomo);
+    erroLexico(atomo);
     return atomo;
 }
 
