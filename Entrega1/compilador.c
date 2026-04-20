@@ -73,7 +73,7 @@ void abrirArquivos(char *arquivo){
 void erroLexico(TInfoAtomo atomo) {
     fprintf(stderr, "\n[ERRO LEXICO]\n");
     fprintf(stderr, "Linha: %d\n", atomo.linha);
-    fprintf(stderr, "Token invalido: \"%s\"\n", atomo.lexema);
+    fprintf(stderr, "Token invalido: %s\n", atomo.lexema);
     fprintf(stderr, "Encerrando analise.\n");
 
     if (buffer != NULL) {
@@ -207,8 +207,8 @@ TInfoAtomo obter_atomo(){
             }
             atomo.lexema[i++] = c;
         }
-
         atomo.lexema[i] = '\0';
+        
         if (erro) {
             atomo.tipo = ERRO;
             erroLexico(atomo);
@@ -229,7 +229,6 @@ TInfoAtomo obter_atomo(){
             }
             atomo.lexema[i++] = c;
         }
-        
         atomo.lexema[i] = '\0';
         
         if(erro){
@@ -245,7 +244,6 @@ TInfoAtomo obter_atomo(){
     // Verifica se é string
     if (c == '"') {
         atomo.lexema[i++] = c;
-        
         while ((c = fgetc(buffer)) != '"' && c != EOF && c != '\n') {
             atomo.lexema[i++] = c;
         }
@@ -254,6 +252,7 @@ TInfoAtomo obter_atomo(){
             atomo.lexema[i++] = c; 
             atomo.lexema[i] = '\0';
             atomo.tipo = STRING;
+
         } else {
             atomo.lexema[i] = '\0';
             atomo.tipo = ERRO;
@@ -270,34 +269,29 @@ TInfoAtomo obter_atomo(){
     // Verifica se é operador relacional ou de simples "=" para atribuição
     if (c == '=' || c == '<' || c == '>' || c == '!') {
         atomo.lexema[i++] = c;
-        char prox = fgetc(buffer); 
-        
-        if (prox == '=') {
-            atomo.lexema[i++] = prox;
-            atomo.lexema[i] = '\0';
-            atomo.tipo = OPERADOR_RELACIONAL;
-
-            printAtomo(atomo);
-            return atomo;
+        while((c = fgetc(buffer)) != EOF && !isspace(c)){
+            atomo.lexema[i++] = c;
         }
-        
-        ungetc(prox, buffer);
         atomo.lexema[i] = '\0';
-        
-        if (c == '!') {
-            atomo.tipo = ERRO; 
-        } else if (c == '=') {
-            atomo.tipo = DELIMITADOR; 
+
+        if(strcmp(atomo.lexema, "==") == 0 || strcmp(atomo.lexema, ">=") == 0 || 
+           strcmp(atomo.lexema, "<=") == 0 || strcmp(atomo.lexema, "!=") == 0 ||
+           strcmp(atomo.lexema, "<") == 0 || strcmp(atomo.lexema, ">") == 0){
+            atomo.tipo = OPERADOR_RELACIONAL;
+       
+        } else if(strcmp(atomo.lexema, "=") == 0){
+            atomo.tipo = DELIMITADOR;
         } else {
-            atomo.tipo = OPERADOR_RELACIONAL; 
+            atomo.tipo = ERRO;
         }
         
         if (atomo.tipo == EOS || atomo.tipo == ERRO) {
             erroLexico(atomo);
-        } 
+        }
 
         printAtomo(atomo);
         return atomo;
+        
     }
 
     // Verifica se é operador aritmético
