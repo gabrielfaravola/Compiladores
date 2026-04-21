@@ -1,6 +1,11 @@
-/*
-gcc -Wall -Wno-unused-result -g -Og compilador.c -o compilador
-*/
+/* ===========================================================================
+PROJETO COMPILADORES - FASE 1 (Análise Léxica e Sintática)
+
+Gabriel Pereira Faravola - RA: 10427189
+Matheus Veiga Bacetic - RA: 10425638
+
+Compilação: gcc -Wall -Wno-unused-result -g -Og compilador.c -o compilador
+=========================================================================== */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,6 +74,9 @@ void abrirArquivos(char *arquivo){
         perror("Erro ao criar/abrir saida.txt");
     }
 }
+
+
+// || ANALISADOR LÉXICO ||
 
 // Printa erro lexico e encerra programa
 void erroLexico(TInfoAtomo atomo) {
