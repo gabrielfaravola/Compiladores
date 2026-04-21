@@ -1,4 +1,4 @@
-# Alunos 
+# Desenvolvedores
 
 Gabriel Pereira Faravola - 10427189
 
