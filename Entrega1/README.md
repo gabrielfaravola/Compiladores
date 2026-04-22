@@ -4,6 +4,10 @@ Gabriel Pereira Faravola - 10427189
 
 Matheus Veiga Bacetic Joaquim - 10425638
 
+# Comando de compilação
+Compilação: gcc -Wall -Wno-unused-result -g -Og compilador.c -o compilador
+
+---
 # Especificação Léxica e Sintática - MiniPython
 
 Este documento descreve as Expressões Regulares (ERs) para a identificação dos átomos (tokens) e a Gramática Livre de Contexto (GLC) para a análise sintática da linguagem MiniPython.
