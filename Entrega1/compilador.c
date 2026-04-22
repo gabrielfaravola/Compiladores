@@ -58,7 +58,6 @@ FILE *buffer;
 FILE *saida;
 int linhaAtual = 1;
 char tabela_simbolos[Total_IDs][100];
-bool id_definido[Total_IDs] = {false}; 
 int IDs_definidos = 1;
 
 
@@ -364,7 +363,6 @@ void elementoBase(void);
 void criacaoLista(void);
 void listaArgumentos(void);
 void listaPrint(void);
-void definirID(int index); 
 
 //Função consome que vai comparar cada átomo e avançar
 void consome(TAtomo tipo_esperado) {
@@ -438,26 +436,10 @@ void listaPrint() {
     }
 }
 
-int consomeIdentificador(bool allowUndefined) {
-    int index = buscarOuInserir(lookahead.lexema);
-    if (!allowUndefined && !id_definido[index]) {
-        fprintf(stderr, "\n[ERRO SINTÁTICO]\nLinha %d: Identificador '%s' nao declarado\n", lookahead.linha, lookahead.lexema);
-        if (buffer != NULL) fclose(buffer);
-        exit(EXIT_FAILURE);
-    }
-    consome(IDENTIFICADOR);
-    return index;
-}
 
-// Função que marca um ID como "definido" (ou seja, ele recebeu um valor e agora pode ser usado)
-void definirID(int index) {
-    if (index >= 0 && index < Total_IDs) {
-        id_definido[index] = true;
-    }
-}
+
 
 void operacaoIdentificador() {
-    int idIndex = buscarOuInserir(lookahead.lexema);
     consome(IDENTIFICADOR);
 
     if (lookahead.tipo == DELIMITADOR && strcmp(lookahead.lexema, "(") == 0) {
@@ -478,7 +460,6 @@ void operacaoIdentificador() {
     if (lookahead.tipo == DELIMITADOR && strcmp(lookahead.lexema, "=") == 0) {
         consome(DELIMITADOR);
         expressao();
-        definirID(idIndex);
         return;
     }
 
@@ -528,9 +509,7 @@ void comandoRepeticao() {
         instrucao();
     } else {
         consome(PALAVRA_RESERVADA); // for
-        int idIndex = buscarOuInserir(lookahead.lexema);
         consome(IDENTIFICADOR);
-        definirID(idIndex);
         if (!(lookahead.tipo == OPERADOR_LOGICO && strcmp(lookahead.lexema, "in") == 0)) {
             erroSintatico("Esperado 'in' após identificador do for");
         }
@@ -658,7 +637,10 @@ void termoMultiplicativo() {
 void elementoBase() {
     switch (lookahead.tipo) {
         case IDENTIFICADOR: {
-            consomeIdentificador(false);
+            // VOLTAMOS AO COMPORTAMENTO PURAMENTE SINTÁTICO
+            // Ele apenas consome o token e avança, sem perguntar se já tem valor.
+            consome(IDENTIFICADOR); 
+            
             if (lookahead.tipo == DELIMITADOR && strcmp(lookahead.lexema, "[") == 0) {
                 consome(DELIMITADOR);
                 expressao();
