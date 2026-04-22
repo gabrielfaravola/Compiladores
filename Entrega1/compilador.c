@@ -732,18 +732,18 @@ int main(int argv, char *argc[]){
     abrirArquivos(argc[1]);
 
     // 3. O ARRANQUE DO MOTOR
-    // Pega o primeiríssimo token e joga na variável global para o sintático começar a avaliar
+    // Pega o primeiro token e armazena na variável global para o sintático começar a avaliar
     lookahead = obter_atomo();
 
     // 4. O LOOP PRINCIPAL (A regra ProgramaMiniPython)
-    // Enquanto o token atual não for o fim do arquivo (EOS), continue lendo instruções.
+    // Enquanto o token atual não for o fim do arquivo (EOS), continue lendo instruções
     while (lookahead.tipo != EOS) {
         instrucao(); // Chama a função raiz que criamos no Sintático
     }
 
     // 5. POUSO SEGURO
     // Se o while terminar sem que nenhum exit(1) tenha sido disparado por erro, 
-    // significa que o código MiniPython está com a sintaxe impecável.
+    // significa que o código MiniPython está com a sintaxe correta
     printf("\n[SUCESSO] Análise Léxica e Sintática concluídas. Nenhum erro encontrado!\n");
 
     // Limpa a memória fechando o arquivo
