@@ -228,10 +228,10 @@ TInfoAtomo obter_atomo(){
         return atomo;
     }
 
-    // Verifica se é palavra reservada ou ID
+    // Verifica se é uma palavra valida
     if (isalpha(c) || c == '_') {
         atomo.lexema[i++] = c;
-
+        
         while ((c = fgetc(buffer)) != EOF && (!isspace(c))){
             if(c != '_' && !isalpha(c) && !isdigit(c)){ 
                 erro = true;
@@ -244,7 +244,8 @@ TInfoAtomo obter_atomo(){
             atomo.tipo = ERRO;
             erroLexico(atomo);
         }
-
+        
+        // Verifica se é palavra reservada ou ID
         atomo.tipo = classificarLexema(atomo.lexema);
         printAtomo(atomo);
         return atomo;
@@ -275,7 +276,7 @@ TInfoAtomo obter_atomo(){
         return atomo;
     }
 
-    // Verifica se é operador relacional ou de simples "=" para atribuição
+    // Verifica se é operador relacional ou atribuição
     if (c == '=' || c == '<' || c == '>' || c == '!') {
         atomo.lexema[i++] = c;
         while((c = fgetc(buffer)) != EOF && !isspace(c)){
@@ -323,8 +324,9 @@ TInfoAtomo obter_atomo(){
         return atomo;
     }
 
-    // Verifica se é delimitador
-    if (c == '(' || c == ')' || c == '[' || c == ']' || c == '{' || c == '}' || c == ',' || c == ':') {
+    // Verifica se é delimitador'
+    if (c == '(' || c == ')' || c == '[' || c == ']' || c == '{' || 
+        c == '}' || c == ',' || c == ':' || c == ';' || c == '.') {
         atomo.lexema[i++] = c;
         atomo.lexema[i] = '\0';
         atomo.tipo = DELIMITADOR;
