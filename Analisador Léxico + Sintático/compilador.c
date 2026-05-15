@@ -705,6 +705,17 @@ void elementoBase() {
     }
 }
 
+
+//Analisador Semântico 
+
+//tabela de símbolos
+typedef struct _TNo {
+char ID [16];
+int endereco;
+char tipo [7];
+struct _TNo *prox;
+} TNo;
+
 int main(int argv, char *argc[]){
     // 1. Verificação de segurança da inicialização
     if(argv != 2){  
